@@ -16,10 +16,11 @@
 #define WORD_LENGTH 32      // Word length in bits
 #define TEXT_LENGTH 8
 
+#define MASK ((unsigned char)(128))
 
 typedef struct cypherContext
 {
-    uint8_t rounds;  // The number of rounds executed when encrypting data
+    unsigned char rounds;  // The number of rounds executed when encrypting data
     uint32_t *subKeyWord;    // The round subkey words
 }
 
@@ -39,10 +40,10 @@ void encrypt(cypherContext *context, void *block);
 void decrypt(cypherContext *context, void *block);
 
 //shift rotate left n spaces
-uint32_t rotateLeft(uint32_t a, uint8_t n);
+uint32_t rotateLeft(uint32_t a, unsigned char n);
 
 //shift rotate left n spaces
-uint32_t rotateRight(uint32_t a, uint8_t n);
+uint32_t rotateRight(uint32_t a, unsigned char n);
 
 
 cypherContext* setNewContext()
@@ -63,13 +64,13 @@ void freeContext(cypherContext *context)
 void keyExpansion(cypherContext *context, void *key)
 {
     context->subKeyWord[0] = P_W;
-    uint8_t i = 0, j = 0;
+    unsigned char i = 0, j = 0;
     for(i = 1; i <= 2*context->rounds+3; ++i)
         context->subKeyWord[i] = context->subKeyWord[i-1] + Q_W;
 
     i = 0;
     uint32_t a = 0, b = 0, X = 0, Y = 0;
-    for(uint8_t k=1; k<=3*(2*context->rounds+4); ++k)
+    for(unsigned char k=1; k<=3*(2*context->rounds+4); ++k)
     {
         a = context->subKeyWord[i] = rotateLeft((context->subKeyWord[i] + a + b), 3);
         b = ((uint32_t*)key)[j] = rotateLeft(((uint32_t*)key)[j] + a + b, a + b);
@@ -78,12 +79,12 @@ void keyExpansion(cypherContext *context, void *key)
     }
 }
 
-uint32_t rotateLeft(uint32_t value, uint8_t offset)
+uint32_t rotateLeft(uint32_t value, unsigned char offset)
 {
 	return (value << offset) | (value >> (W - offset));
 }
 
-uint32_t rotateRight(uint32_t value, uint8_t offset)
+uint32_t rotateRight(uint32_t value, unsigned char offset)
 {
 	return (value >> offset) | (value << (W - offset));
 }
@@ -105,7 +106,7 @@ void encrypt(cypherContext *context, void* block)
 	H ^= context->subKeyWord[1];
 
     uint32_t F1=0, F2=0, R1=0,R2=0, tempRegister;
-    for(uint8_t i = 1; i <= context->rounds; ++i)
+    for(unsigned char i = 1; i <= context->rounds; ++i)
     {
 		F1 = (B * B) + (F * F) - (B * F) - 7;
 		F2 = (D * D) + (H * H) - (D * H) - 7;
@@ -163,7 +164,7 @@ void decrypt(cypherContext *context, void *block)
 	E -= context->subKeyWord[2 * context->rounds + 3];
 	
 	uint32_t F1 = 0, F2 = 0, R1 = 0, R2 = 0, tempRegister;
-    for(uint8_t i = context->rounds; i > 0; --i)
+    for(unsigned char i = context->rounds; i > 0; --i)
     {
         tempRegister = H;
 		H = G;
@@ -246,30 +247,56 @@ void cypherText(unsigned char *key, unsigned char *text)
 
 }
 
+int mostSignificantBit(unsigned char value) {
 
+//unsigned char mask = 0;
 
-int mostSignificantBit(unsigned char *value) {
+unsigned char i = (unsigned char) value & MASK;
 
-return *value & 0x80;
+printf("MASK=%d\n",i);
 
+if (value & MASK == 0){
+        return 0;
+    }
+else 
+    return 1;
 }
-
-
 
 void omac(unsigned char *key) {
 
-	unsigned char zeros[16] = { 0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2};
-
-	unsigned char *L = encryptionRound(key, zeros);
-
-	printf("%d\n", mostSignificantBit(zeros));
-	printf("%s\n", zeros);
+	unsigned char L[16] = {0};
 	
+	printf("Zeros[0]=%d\n", L[0]);
+
+	encryptionRound(key, L);
+
+	
+	printf("L=%d\n", L[0]);
+	
+	
+
+	printf("%d\n", mostSignificantBit(L[0]));
+	//printf("%s\n", zeros);	
+
+	unsigned char subKeyOne[8], subKeyTwo[8];
+
+	const unsigned char CONSTANT;
+
+
+
+
+
+
 }
 
 int main(void)
 {	   
-	unsigned char key[32] = { 0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0x01,0x12,0x23,0x34,0x45,0x56,0x67,0x78,0x89,0x9A,0xAB,0xBC,0xCD,0xDE,0xEF,0xF0,0x10,0x32,0x54,0x76,0x98,0xBA,0xDC,0xFE };
+	unsigned char key[32] = {
+		0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,
+		0x01,0x12,0x23,0x34,0x45,0x56,0x67,0x78,
+		0x89,0x9A,0xAB,0xBC,0xCD,0xDE,0xEF,0xF0,
+		0x10,0x32,0x54,0x76,0x98,0xBA,0xDC,0xFE
+	};	
 	unsigned char str[32];
 	unsigned int c;
 		
@@ -285,12 +312,10 @@ int main(void)
 			cypherText(key, str);			
 		}
 	}
-
 	while (i <= H_W) {
 
 		str[i++] = '\n';
 	}
-
 	cypherText(key, str);
 	
 	*/
