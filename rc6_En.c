@@ -281,10 +281,10 @@ void omac(unsigned char *key) {
 
 	encryptionRound(key, L);
 
-	
+
 	printf("L=%d\n", L[0]);
-	
-	
+
+
 
 	//printf("%d\n", mostSignificantBit(L[0]));
 	//printf("%s\n", zeros);	
@@ -294,15 +294,19 @@ void omac(unsigned char *key) {
 	const unsigned char CONSTANT;
 
 	if (mostSignificantBit(L[0]) == 0) {
-
-		 shiftLeft(L, subKeyOne);
-
-		 printf("%s\n", subKeyOne);
-	}else {
+		printf("L=%s\n", L);
 
 		shiftLeft(L, subKeyOne);
 
-		printf("%s\n", subKeyOne);
+		printf("subKeyOne=%s\n", subKeyOne);
+	}
+	else
+	{
+		printf("L=%s\n", L);
+
+		shiftLeft(L, subKeyOne);
+
+		printf("subKeyOne=%s\n", subKeyOne);
 	}
 
 	system("pause");
