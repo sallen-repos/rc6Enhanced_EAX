@@ -16,6 +16,7 @@
 #define WORD_LENGTH 32      // Word length in bits
 #define TEXT_LENGTH 8
 
+
 typedef struct cypherContext
 {
     uint8_t rounds;  // The number of rounds executed when encrypting data
@@ -201,11 +202,13 @@ void decrypt(cypherContext *context, void *block)
 	((uint32_t *)block)[7] = H;
 }
 
-void encryptionRound(unsigned char *key, unsigned char *text)
+unsigned char * encryptionRound(unsigned char *key, unsigned char *text)
 {
 	cypherContext *p = setNewContext();
 	keyExpansion(p, key);
 	encrypt(p, text);
+
+	return key;
 	
 }
 
@@ -243,6 +246,27 @@ void cypherText(unsigned char *key, unsigned char *text)
 
 }
 
+
+
+int mostSignificantBit(unsigned char *value) {
+
+return *value & 0x80;
+
+}
+
+
+
+void omac(unsigned char *key) {
+
+	unsigned char zeros[16] = { 0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2,  0xC2, 0xC2, 0xC2, 0xC2};
+
+	unsigned char *L = encryptionRound(key, zeros);
+
+	printf("%d\n", mostSignificantBit(zeros));
+	printf("%s\n", zeros);
+	
+}
+
 int main(void)
 {	   
 	unsigned char key[32] = { 0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0x01,0x12,0x23,0x34,0x45,0x56,0x67,0x78,0x89,0x9A,0xAB,0xBC,0xCD,0xDE,0xEF,0xF0,0x10,0x32,0x54,0x76,0x98,0xBA,0xDC,0xFE };
@@ -250,7 +274,7 @@ int main(void)
 	unsigned int c;
 		
 	int i = 0;
-
+/*
 	while ((c = getc(stdin)) != '\n') {
 
 		str[i++] = c;
@@ -269,6 +293,10 @@ int main(void)
 
 	cypherText(key, str);
 	
+	*/
+
+	omac(key);
+
 	system("pause");
 
 	return 0;
