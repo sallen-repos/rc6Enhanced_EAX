@@ -16,6 +16,8 @@
 #define WORD_LENGTH 32      // Word length in bits
 #define TEXT_LENGTH 8
 
+const int8_t CONSTANT = 0x8D;
+
 #define MASK ((unsigned char)(128))
 
 typedef struct cypherContext
@@ -91,33 +93,33 @@ uint32_t rotateRight(uint32_t value, unsigned char offset)
 
 void encrypt(cypherContext *context, void* block)
 {
-    register uint32_t A = ((uint32_t *)block)[0];
-    register uint32_t B = ((uint32_t *)block)[1];
-    register uint32_t C = ((uint32_t *)block)[2];
-    register uint32_t D = ((uint32_t *)block)[3];
-	register uint32_t E = ((uint32_t *)block)[4];
-	register uint32_t F = ((uint32_t *)block)[5];
-	register uint32_t G = ((uint32_t *)block)[6];
-	register uint32_t H = ((uint32_t *)block)[7];
+    uint32_t A = ((uint32_t *)block)[0];
+    uint32_t B = ((uint32_t *)block)[1];
+    uint32_t C = ((uint32_t *)block)[2];
+    uint32_t D = ((uint32_t *)block)[3];
+	uint32_t E = ((uint32_t *)block)[4];
+	uint32_t F = ((uint32_t *)block)[5];
+	uint32_t G = ((uint32_t *)block)[6];
+	uint32_t H = ((uint32_t *)block)[7];
 
     B += context->subKeyWord[0];
     D ^= context->subKeyWord[0];
 	F += context->subKeyWord[1];
 	H ^= context->subKeyWord[1];
 
-    uint32_t F1=0, F2=0, R1=0,R2=0, tempRegister;
+    uint32_t fOne=0, fTwo=0, rOne=0,rTwo=0, tempRegister;
     for(unsigned char i = 1; i <= context->rounds; ++i)
     {
-		F1 = (B * B) + (F * F) - (B * F) - 7;
-		F2 = (D * D) + (H * H) - (D * H) - 7;
+		fOne = (B * B) + (F * F) - (B * F) - 7;
+		fTwo = (D * D) + (H * H) - (D * H) - 7;
 		
-		R1 = rotateLeft(F1, F2);
-		R2 = rotateLeft(F2, F1);
+		rOne = rotateLeft(fOne, fTwo);
+		rTwo = rotateLeft(fTwo, fOne);
 
-		A = rotateLeft((A ^ R1), R2) + context->subKeyWord[2 * i];        
-		C = rotateLeft((C + R2), R1) ^ context->subKeyWord[2 * i];
-		E = rotateLeft((E ^ R1), R2) + context->subKeyWord[2 * i + 1];
-		G = rotateLeft((G + R2), R1) ^ context->subKeyWord[2 * i + 1];
+		A = rotateLeft((A ^ rOne), rTwo) + context->subKeyWord[2 * i];        
+		C = rotateLeft((C + rTwo), rOne) ^ context->subKeyWord[2 * i];
+		E = rotateLeft((E ^ rOne), rTwo) + context->subKeyWord[2 * i + 1];
+		G = rotateLeft((G + rTwo), rOne) ^ context->subKeyWord[2 * i + 1];
 
 		tempRegister = A;
         A = B;
@@ -149,21 +151,21 @@ void encrypt(cypherContext *context, void* block)
 
 void decrypt(cypherContext *context, void *block)
 {
-	register uint32_t A = ((uint32_t *)block)[0];
-	register uint32_t B = ((uint32_t *)block)[1];
-	register uint32_t C = ((uint32_t *)block)[2];
-	register uint32_t D = ((uint32_t *)block)[3];
-	register uint32_t E = ((uint32_t *)block)[4];
-	register uint32_t F = ((uint32_t *)block)[5];
-	register uint32_t G = ((uint32_t *)block)[6];
-	register uint32_t H = ((uint32_t *)block)[7];
+	uint32_t A = ((uint32_t *)block)[0];
+	uint32_t B = ((uint32_t *)block)[1];
+	uint32_t C = ((uint32_t *)block)[2];
+	uint32_t D = ((uint32_t *)block)[3];
+	uint32_t E = ((uint32_t *)block)[4];
+	uint32_t F = ((uint32_t *)block)[5];
+	uint32_t G = ((uint32_t *)block)[6];
+	uint32_t H = ((uint32_t *)block)[7];
 
     C ^= context->subKeyWord[2 * context->rounds + 2];
     A -= context->subKeyWord[2 * context->rounds + 2];
 	G ^= context->subKeyWord[2 * context->rounds + 3];
 	E -= context->subKeyWord[2 * context->rounds + 3];
 	
-	uint32_t F1 = 0, F2 = 0, R1 = 0, R2 = 0, tempRegister;
+	uint32_t fOne = 0, fTwo = 0, rOne = 0, rTwo = 0, tempRegister;
     for(unsigned char i = context->rounds; i > 0; --i)
     {
         tempRegister = H;
@@ -176,16 +178,16 @@ void decrypt(cypherContext *context, void *block)
         B = A;
         A = tempRegister;
 
-		F1 = (B * B) + (F * F) - (B * F) - 7;
-		F2 = (D * D) + (H * H) - (D * H) - 7;
+		fOne = (B * B) + (F * F) - (B * F) - 7;
+		fTwo = (D * D) + (H * H) - (D * H) - 7;
        
-		R1 = rotateLeft(F1, F2);
-		R2 = rotateLeft(F2, F1);
+		rOne = rotateLeft(fOne, fTwo);
+		rTwo = rotateLeft(fTwo, fOne);
 
-		A = rotateRight((A - context->subKeyWord[2 * i]), R2) ^ R1;
-        C = rotateRight((C ^ context->subKeyWord[2 * i]), R1) - R2;
-		E = rotateRight((E - context->subKeyWord[2 * i + 1]), R2) ^ R1;
-		G = rotateRight((G ^ context->subKeyWord[2 * i + 1]), R1) - R2;
+		A = rotateRight((A - context->subKeyWord[2 * i]), rTwo) ^ rOne;
+        C = rotateRight((C ^ context->subKeyWord[2 * i]), rOne) - rTwo;
+		E = rotateRight((E - context->subKeyWord[2 * i + 1]), rTwo) ^ rOne;
+		G = rotateRight((G ^ context->subKeyWord[2 * i + 1]), rOne) - rTwo;
     }
 
 	D ^= context->subKeyWord[0];
@@ -265,11 +267,14 @@ else
 void shiftLeft(unsigned char * array, unsigned char * shiftedArray) {
 
 for(int i = 0; i < 16; ++i)
-   shiftedArray[i] =  array[i] >> 1;
+   shiftedArray[i] = array[i] >> 1;
+
 }
 
-unsigned char * xor(unsigned char * array) {
+unsigned char * shiftXor(unsigned char * array, unsigned char * xorArray) {
 
+for(int i = 0; i < 16; ++i)
+   xorArray[i] = (array[i] >> 1) ^ CONSTANT;
 
 }
 
@@ -289,25 +294,32 @@ void omac(unsigned char *key) {
 	//printf("%d\n", mostSignificantBit(L[0]));
 	//printf("%s\n", zeros);	
 
-	unsigned char subKeyOne[16];
+	unsigned char subKeyOne[16], subKeyTwo[16];
 
 	const unsigned char CONSTANT;
 
 	if (mostSignificantBit(L[0]) == 0) {
-		printf("L=%s\n", L);
-
-		shiftLeft(L, subKeyOne);
-
-		printf("subKeyOne=%s\n", subKeyOne);
+		
+		shiftLeft(L, subKeyOne);		
 	}
 	else
 	{
-		printf("L=%s\n", L);
-
-		shiftLeft(L, subKeyOne);
-
-		printf("subKeyOne=%s\n", subKeyOne);
+		shiftXor(L, subKeyOne);		
 	}
+	printf("L=%s\n", L);
+	printf("subKeyOne=%s\n", subKeyOne);
+
+	if (mostSignificantBit(subKeyOne) == 0) {
+
+		shiftLeft(subKeyOne, subKeyTwo);		
+	}
+	else
+	{
+		shiftXor(subKeyOne, subKeyTwo);	
+	}
+	printf("L=%s\n", L);
+	printf("subKeyOne=%s\n", subKeyOne);
+	printf("subKeyTwo=%s\n", subKeyTwo);
 
 	system("pause");
 }
