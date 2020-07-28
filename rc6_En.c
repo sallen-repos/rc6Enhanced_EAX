@@ -262,6 +262,17 @@ else
     return 1;
 }
 
+void shiftLeft(unsigned char * array, unsigned char * shiftedArray) {
+
+for(int i = 0; i < 16; ++i)
+   shiftedArray[i] =  array[i] >> 1;
+}
+
+unsigned char * xor(unsigned char * array) {
+
+
+}
+
 void omac(unsigned char *key) {
 
 	unsigned char L[16] = {0};
@@ -275,18 +286,26 @@ void omac(unsigned char *key) {
 	
 	
 
-	printf("%d\n", mostSignificantBit(L[0]));
+	//printf("%d\n", mostSignificantBit(L[0]));
 	//printf("%s\n", zeros);	
 
-	unsigned char subKeyOne[8], subKeyTwo[8];
+	unsigned char subKeyOne[16];
 
 	const unsigned char CONSTANT;
 
+	if (mostSignificantBit(L[0]) == 0) {
 
+		 shiftLeft(L, subKeyOne);
 
+		 printf("%s\n", subKeyOne);
+	}else {
 
+		shiftLeft(L, subKeyOne);
 
+		printf("%s\n", subKeyOne);
+	}
 
+	system("pause");
 }
 
 int main(void)
@@ -322,7 +341,8 @@ int main(void)
 
 	omac(key);
 
-	system("pause");
+
+	
 
 	return 0;
 }
